@@ -1,0 +1,8 @@
+sequence_id,original_header,name,date,source_file,field_1,field_2,field_3,field_4
+99603f8fb1e9,sp|P12345|HUMAN_INSULIN|2024-01-15|Pancreas,HUMAN_INSULIN,2024-01-15,test_sequences.fasta,P12345,Pancreas,,
+14725a105989,sp|P67890|MOUSE_HEMOGLOBIN|2024-02-20|Blood|Adult,MOUSE_HEMOGLOBIN,2024-02-20,test_sequences.fasta,P67890,Blood,Adult,
+d975dea1f79e,gb|ABC123|TestProtein|Missing date field,TestProtein,,test_sequences.fasta,ABC123,Missing date field,,
+81433c98d8bf,custom_format;ProteinX;2023-11-30;Lab_Sample_001,custom_format,2023-11-30,test_sequences.fasta,ProteinX,Lab_Sample_001,,
+3e3ffe2c426e,sp|Q99999|NOVEL_ENZYME|2024-03-01|Liver|Cytoplasm|Homo sapiens,NOVEL_ENZYME,2024-03-01,test_sequences.fasta,Q99999,Liver,Cytoplasm,Homo sapiens
+3511f7d23903,sp|P12345|HUMAN_INSULIN|2024-06-20|Different_Tissue,HUMAN_INSULIN,2024-06-20,test_sequences.fasta,P12345,Different_Tissue,,
+c522b4c6741f,uniprot|A0A123|ProteinWithXAA|2024-01-10,ProteinWithXAA,2024-01-10,test_sequences.fasta,A0A123,,,
