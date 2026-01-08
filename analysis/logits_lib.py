@@ -308,7 +308,7 @@ def analyze_residues(
         
     Returns:
         Dictionary with:
-        - logits_pooled: Pooled logits DataFrame
+        - logits_pooled: Pooled logits for residues of interest
         - probs: Probability DataFrame
         - scaled_logits: Scaled logits for visualization
         - residue_labels: Labels for residues
@@ -335,29 +335,59 @@ def analyze_residues(
     if not logits_list:
         raise ValueError("No valid logits found")
     
-    # Pool across sequences
-    pooled = pool_logits(logits_list, method=pool_method)
+    # If no residues specified, use all positions from shortest sequence
+    if residues_of_interest is None or len(residues_of_interest) == 0:
+        min_len = min(l.shape[0] for l in logits_list)
+        residues_of_interest = {i: f"Pos {i+1}" for i in range(min_len)}
+    
+    # Extract logits at each position of interest, pooled across sequences
+    # For each position, collect logits from all sequences that have that position
+    pooled_rows = []
+    valid_labels = []
+    
+    for pos, label in residues_of_interest.items():
+        # Collect logits at this position from all sequences that have it
+        pos_logits = []
+        for logits in logits_list:
+            if pos < logits.shape[0]:
+                pos_logits.append(logits[pos])  # Shape: (vocab_size,)
+        
+        if len(pos_logits) == 0:
+            continue  # Skip positions not present in any sequence
+        
+        # Stack and pool across sequences
+        stacked = torch.stack(pos_logits, dim=0)  # Shape: (num_seqs, vocab_size)
+        
+        if pool_method == "mean":
+            pooled = stacked.mean(dim=0)
+        elif pool_method == "max":
+            pooled = stacked.max(dim=0)[0]
+        elif pool_method == "sum":
+            pooled = stacked.sum(dim=0)
+        else:
+            raise ValueError(f"Unknown pooling method: {pool_method}")
+        
+        pooled_rows.append(pooled)
+        valid_labels.append(label)
+    
+    if not pooled_rows:
+        raise ValueError("No valid positions found in any sequence")
+    
+    # Stack into final tensor
+    pooled_tensor = torch.stack(pooled_rows, dim=0)  # Shape: (num_positions, vocab_size)
     
     # Extract amino acid probabilities
-    probs_df = extract_amino_acid_probs(pooled, vocab=vocab)
-    
-    # Filter to residues of interest
-    if residues_of_interest:
-        valid_indices = [i for i in residues_of_interest.keys() if i < len(probs_df)]
-        probs_subset = probs_df.iloc[valid_indices]
-        residue_labels = [residues_of_interest[i] for i in valid_indices]
-    else:
-        probs_subset = probs_df
-        residue_labels = [str(i) for i in range(len(probs_df))]
+    probs_df = extract_amino_acid_probs(pooled_tensor, vocab=vocab)
+    probs_df.index = valid_labels
     
     # Scale for visualization
-    scaled = scale_logits(probs_subset, method=scale_method)
+    scaled = scale_logits(probs_df, method=scale_method)
     
     return {
-        "logits_pooled": pooled,
-        "probs": probs_subset,
+        "logits_pooled": pooled_tensor,
+        "probs": probs_df,
         "scaled_logits": scaled,
-        "residue_labels": residue_labels,
+        "residue_labels": valid_labels,
         "vocab": vocab,
     }
 
