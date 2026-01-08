@@ -362,8 +362,8 @@ def embed_sequences(
         }
     }
     
-    def process_one(args):
-        idx, seq_id, seq = args
+    # Process sequences sequentially (GPU models are not thread-safe)
+    for i, (seq_id, seq) in enumerate(zip(sequence_ids, sequences)):
         try:
             protein = _convert_to_protein(seq)
             protein_tensor = model.encode(protein)
@@ -411,36 +411,20 @@ def embed_sequences(
                     if isinstance(hs, torch.Tensor):
                         seq_result["hidden_states"][layer_idx] = hs.squeeze().detach().cpu()
             
-            return (idx, seq_id, seq_result, None)
+            results["sequence_id"].append(seq_id)
+            results["embeddings"].append(seq_result["embeddings"])
+            results["logits"].append(seq_result["logits"])
+            results["hidden_states"].append(seq_result["hidden_states"])
+            
         except Exception as e:
-            return (idx, seq_id, None, str(e))
-    
-    # Process sequences
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [
-            executor.submit(process_one, (i, sid, seq))
-            for i, (sid, seq) in enumerate(zip(sequence_ids, sequences))
-        ]
+            results["errors"].append((seq_id, str(e)))
+            results["sequence_id"].append(seq_id)
+            results["embeddings"].append(None)
+            results["logits"].append(None)
+            results["hidden_states"].append({})
         
-        completed = 0
-        for future in futures:
-            idx, seq_id, seq_result, error = future.result()
-            completed += 1
-            
-            if progress_callback:
-                progress_callback(completed, total)
-            
-            if error:
-                results["errors"].append((seq_id, error))
-                results["sequence_id"].append(seq_id)
-                results["logits"].append(None)
-                results["embeddings"].append(None)
-                results["hidden_states"].append({})
-            else:
-                results["sequence_id"].append(seq_id)
-                results["embeddings"].append(seq_result["embeddings"])
-                results["logits"].append(seq_result["logits"])
-                results["hidden_states"].append(seq_result["hidden_states"])
+        if progress_callback:
+            progress_callback(i + 1, total)
     
     return results
 
