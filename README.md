@@ -1,104 +1,49 @@
-# Sequence Cleaning & Embedding Pipeline
+# Protein Sequence Analysis Pipeline
 
-🧬 Tools to clean FASTA files and generate protein sequence embeddings using ESM-C models.
+🧬 Complete pipeline for protein sequence cleaning, embedding, and analysis using ESM-C models.
 
 ## Pipeline Overview
 
 ```
-FASTA Files → fasta_cleaner → CSV Files → esmc_embed → Embeddings (.pt)
+FASTA → fasta_cleaner → CSV → esmc_embed → embeddings.pt → analysis → results
 ```
 
-1. **FASTA Cleaner**: Clean sequences, parse metadata, deduplicate
-2. **ESMC Embed**: Generate embeddings using ESM-C models
+| Step | Tool | Description |
+|------|------|-------------|
+| 1 | `fasta_cleaner` | Clean sequences, parse metadata |
+| 2 | `esmc_embed_lib` | Generate ESM-C embeddings |
+| 3 | `entropy_lib` | Shannon entropy analysis |
+| 4 | `logits_lib` | Amino acid propensity analysis |
 
 ---
 
-## Step 1: FASTA Cleaning
+## Quick Start
 
-### Option A: Google Colab (Recommended for beginners)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USERNAME/sequence-cleaning/blob/main/fasta_cleaner.ipynb)
+### Master Pipeline Notebook
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USERNAME/sequence-cleaning/blob/main/pipeline.ipynb)
 
-1. Click the badge above
-2. Run all cells (Runtime → Run all)
-3. Upload your FASTA files
-4. Click "Process Files"
-5. Download `sequences.csv` and `metadata.csv`
+The `pipeline.ipynb` notebook orchestrates the complete workflow with interactive widgets.
 
-### Option B: Python Library
+### Python Library Usage
 ```python
-from fasta_cleaner import process_fasta_files, save_results
+# Import from organized packages
+from embedding import process_fasta_files, load_esmc_model, embed_from_csv
+from analysis import analyze_entropy, analyze_residues, plot_heatmap
 
-sequences_df, metadata_df = process_fasta_files(["proteins.fasta"])
-save_results(sequences_df, metadata_df, output_dir="output")
-```
+# Step 1: Clean FASTA
+seq_df, meta_df = process_fasta_files("proteins.fasta")
 
-### Option C: Command Line
-```bash
-python fasta_cleaner.py file1.fasta file2.fasta
-```
-
----
-
-## Step 2: Protein Embeddings
-
-Generate embeddings from the cleaned `sequences.csv` file.
-
-### Option A: Google Colab (Recommended for beginners)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USERNAME/sequence-cleaning/blob/main/esmc_embed_colab.ipynb)
-
-1. Click the badge above
-2. Enter your HuggingFace token
-3. Upload `sequences.csv` from Step 1
-4. Click "Generate Embeddings"
-5. Download `embeddings.pt`
-
-### Option B: Python Library
-```python
-from esmc_embed_lib import load_esmc_model, embed_from_csv, save_embeddings
-
-model = load_esmc_model("your_hf_token")
+# Step 2: Generate embeddings
+model = load_esmc_model("hf_token")
 results = embed_from_csv(model, "sequences.csv")
-save_embeddings(results, "embeddings.pt")
-```
 
-### Option C: Config-Based Script
-```bash
-python esmc_local_batch_embed.py config.yaml
-```
+# Step 3: Entropy analysis
+entropy = analyze_entropy(results)
+print(f"Mean entropy: {entropy['global_mean']:.3f}")
 
----
-
-## Output Files
-
-### From FASTA Cleaner
-
-| File | Column | Description |
-|------|--------|-------------|
-| `sequences.csv` | `sequence_id` | Unique 12-character hash ID |
-| | `sequence` | Cleaned amino acid sequence |
-| | `length` | Sequence length |
-| `metadata.csv` | `sequence_id` | Links to sequences.csv |
-| | `original_header` | Original FASTA header |
-| | `name` | Extracted protein name |
-| | `date` | Extracted date (if present) |
-| | `source_file` | Original filename |
-
-### From ESMC Embed
-
-| File | Key | Description |
-|------|-----|-------------|
-| `embeddings.pt` | `sequence_id` | Links to metadata.csv |
-| | `embeddings` | Per-residue embedding tensors |
-| | `logits` | Logits tensors |
-| | `model_name` | ESM-C model used |
-
-### Loading Embeddings
-```python
-import torch
-
-results = torch.load("embeddings.pt")
-embedding = results["embeddings"][0]  # First sequence
-mean_emb = embedding.mean(dim=0)      # Mean pooling
+# Step 4: Logits analysis
+logits = analyze_residues(results, residues_of_interest={100: "D100"})
+plot_heatmap(logits["scaled_logits"], logits["residue_labels"])
 ```
 
 ---
@@ -107,22 +52,69 @@ mean_emb = embedding.mean(dim=0)      # Mean pooling
 
 ```
 sequence-cleaning/
-├── fasta_cleaner.py          # Library: FASTA cleaning functions
-├── fasta_cleaner.ipynb       # Notebook: Interactive FASTA cleaner
-├── esmc_embed_lib.py         # Library: Embedding functions
-├── esmc_embed_colab.ipynb    # Notebook: Interactive embedding generator
-├── esmc_local_batch_embed.py # Script: Config-based batch embedding
-├── sample_data/
-│   └── test_sequences.fasta  # Sample FASTA file
-└── README.md
+├── pipeline.ipynb              # Master orchestration notebook
+├── embedding/                  # Embedding package
+│   ├── __init__.py
+│   ├── fasta_cleaner.py        # FASTA cleaning functions
+│   └── esmc_embed_lib.py       # ESM-C embedding functions
+├── analysis/                   # Analysis package  
+│   ├── __init__.py
+│   ├── entropy_lib.py          # Shannon entropy analysis
+│   └── logits_lib.py           # Logits pooling & visualization
+├── fasta_cleaner.ipynb         # Interactive FASTA cleaner
+├── esmc_embed_colab.ipynb      # Interactive embedding generator
+└── esmc_local_batch_embed.py   # Config-based batch embedding
 ```
+
+---
+
+## Individual Tools
+
+### FASTA Cleaning
+```bash
+python fasta_cleaner.py proteins.fasta
+```
+
+### Embedding Generation
+```bash
+python esmc_local_batch_embed.py config.yaml
+```
+
+---
+
+## Output Files
+
+| File | Description |
+|------|-------------|
+| `sequences.csv` | Cleaned sequences with unique IDs |
+| `metadata.csv` | Parsed headers linked by sequence_id |
+| `embeddings.pt` | PyTorch file with embeddings, logits, hidden states |
+| `entropy_summary.csv` | Per-sequence entropy statistics |
+| `logits_analysis.csv` | Amino acid propensities at positions of interest |
+
+### Loading Results
+```python
+import torch
+
+# Load embeddings
+results = torch.load("embeddings.pt")
+embedding = results["embeddings"][0]    # First sequence
+mean_emb = embedding.mean(dim=0)        # Mean pooling
+
+# Access hidden states (if extracted)
+hidden = results["hidden_states"][0]    # First sequence
+layer_12 = hidden.get(12)               # Layer 12
+```
+
+---
 
 ## Requirements
 
 - Python 3.8+
-- pandas
-- For embeddings: `esm`, `huggingface_hub`, `torch`
+- Core: `pandas`, `torch`
+- Embedding: `esm`, `huggingface_hub`
+- Analysis: `scikit-learn`, `matplotlib`
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](LICENSE)
