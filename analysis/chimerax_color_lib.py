@@ -78,30 +78,34 @@ def _color_lines(
     normalized: np.ndarray,
     cmap,
     model: int = 1,
+    chain: str = "",
     invert: bool = False,
     targets: str = "atoms,cartoons,surface",
 ) -> list[str]:
     """Return ChimeraX ``color`` command lines for each residue."""
+    spec = f"#{model}/{chain}" if chain else f"#{model}"
     lines: list[str] = []
     for idx, val in enumerate(normalized):
         rgba = cmap(1 - val if invert else val)
         r, g, b, a = (int(round(c * 255)) for c in rgba)
         r, g, b, a = max(r, 0), max(g, 0), max(b, 0), max(a, 0)
-        lines.append(f"color #{model}:{idx + 1} {r},{g},{b},{a} {targets}")
+        lines.append(f"color {spec}:{idx + 1} {r},{g},{b},{a} {targets}")
     return lines
 
 
 def _transparency_lines(
     normalized: np.ndarray,
     model: int = 1,
+    chain: str = "",
     invert: bool = False,
     targets: str = "atoms,cartoons,surface",
 ) -> list[str]:
     """Return ChimeraX ``transparency`` command lines for each residue."""
+    spec = f"#{model}/{chain}" if chain else f"#{model}"
     lines: list[str] = []
     for idx, val in enumerate(normalized):
         t = max(0.0, min(1.0, 1 - val if invert else val))
-        lines.append(f"transparency #{model}:{idx + 1} {t} {targets}")
+        lines.append(f"transparency {spec}:{idx + 1} {t} {targets}")
     return lines
 
 
@@ -119,6 +123,7 @@ def generate_chimerax_script(
     transparency: bool = False,
     transparency_invert: bool = False,
     model: int = 1,
+    chain: str = "",
     show_line: bool = True,
     targets: str = "atoms,cartoons,surface",
 ) -> str:
@@ -135,6 +140,7 @@ def generate_chimerax_script(
         transparency: Whether to include transparency mapping lines.
         transparency_invert: Invert the transparency direction.
         model: ChimeraX model number (default 1).
+        chain: ChimeraX chain ID (e.g. 'A'). Empty string omits chain.
         show_line: Prepend a ``show`` command at the top.
         targets: ChimeraX target specifiers.
 
@@ -149,19 +155,20 @@ def generate_chimerax_script(
 
     cmap = sns.color_palette(cmap_name, as_cmap=True)
 
+    spec = f"#{model}/{chain}" if chain else f"#{model}"
     lines: list[str] = []
 
     if show_line:
-        lines.append(f"show #{model} surface, atoms, cartoons")
+        lines.append(f"show {spec} surface, atoms, cartoons")
 
     if color:
         lines.extend(
-            _color_lines(normalized, cmap, model=model, invert=color_invert, targets=targets)
+            _color_lines(normalized, cmap, model=model, chain=chain, invert=color_invert, targets=targets)
         )
 
     if transparency:
         lines.extend(
-            _transparency_lines(normalized, model=model, invert=transparency_invert, targets=targets)
+            _transparency_lines(normalized, model=model, chain=chain, invert=transparency_invert, targets=targets)
         )
 
     return "\n".join(lines) + "\n"
