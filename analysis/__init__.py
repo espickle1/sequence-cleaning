@@ -18,6 +18,12 @@ from .logits_lib import (
     analyze_residues,
 )
 
+from .chimerax_color_lib import (
+    generate_chimerax_script,
+    write_chimerax_script,
+    scale_values,
+)
+
 __all__ = [
     # Entropy analysis
     "calculate_entropy",
@@ -32,4 +38,8 @@ __all__ = [
     "extract_amino_acid_probs",
     "plot_heatmap",
     "analyze_residues",
+    # ChimeraX color scripts
+    "generate_chimerax_script",
+    "write_chimerax_script",
+    "scale_values",
 ]
