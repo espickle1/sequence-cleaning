@@ -22,6 +22,7 @@ from typing import Sequence
 import numpy as np
 import seaborn as sns
 from sklearn.preprocessing import (
+    FunctionTransformer,
     MinMaxScaler,
     PowerTransformer,
     QuantileTransformer,
@@ -43,15 +44,20 @@ def scale_values(
 
     Args:
         values: 1-D array of raw values.
-        method: One of 'quantile', 'power', 'standard', 'robust', or
-                'none' (returns values unchanged).
+        method: One of 'log', 'minmax', 'quantile', 'power', 'standard', 'robust',
+                or 'none' (returns values unchanged).
 
     Returns:
         Scaled 1-D numpy array.
     """
     col = values.reshape(-1, 1)
 
-    if method == "quantile":
+    if method == "log":
+        # Use log1p (log(1+x)) to safely handle zero values
+        out = np.log1p(col)
+    elif method == "minmax":
+        out = MinMaxScaler().fit_transform(col)
+    elif method == "quantile":
         out = QuantileTransformer(output_distribution="uniform").fit_transform(col)
     elif method == "power":
         out = PowerTransformer(method="yeo-johnson").fit_transform(col)
@@ -83,7 +89,7 @@ def fit_scaler(
 
     Args:
         combined_values: 1-D array of all values concatenated.
-        method: One of 'quantile', 'power', 'standard', 'robust', or 'none'.
+        method: One of 'log', 'minmax', 'quantile', 'power', 'standard', 'robust', or 'none'.
 
     Returns:
         Fitted scaler object, or None if method is 'none'.
@@ -93,7 +99,15 @@ def fit_scaler(
 
     col = combined_values.reshape(-1, 1)
 
-    if method == "quantile":
+    if method == "log":
+        # Log transform doesn't need fitting, but we use FunctionTransformer
+        # for consistent API with other scalers
+        scaler = FunctionTransformer(func=np.log1p, inverse_func=np.expm1)
+        scaler.fit(col)  # No-op but keeps API consistent
+        return scaler
+    elif method == "minmax":
+        scaler = MinMaxScaler()
+    elif method == "quantile":
         scaler = QuantileTransformer(output_distribution="uniform")
     elif method == "power":
         scaler = PowerTransformer(method="yeo-johnson")
@@ -226,7 +240,7 @@ def generate_chimerax_script(
         values: 1-D array-like of per-residue scalar values (e.g. entropy).
         cmap_name: Seaborn / matplotlib colormap name.
         transform_method: Scaling before min-max normalization.
-            One of 'quantile', 'power', 'standard', 'robust', or 'none'.
+            One of 'log', 'minmax', 'quantile', 'power', 'standard', 'robust', or 'none'.
         color: Whether to include color mapping lines.
         color_invert: Invert the colormap direction.
         transparency: Whether to include transparency mapping lines.
