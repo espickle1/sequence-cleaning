@@ -29,10 +29,9 @@ Usage:
 from __future__ import annotations
 
 import re
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 import torch
@@ -40,7 +39,7 @@ import torch
 # ESM imports (will fail if not installed - handled gracefully)
 try:
     from esm.models.esmc import ESMC, ESMCInferenceClient, LogitsConfig
-    from esm.sdk.api import ESMProtein, ESMProteinError, LogitsOutput
+    from esm.sdk.api import ESMProtein
     from huggingface_hub import login
     ESM_AVAILABLE = True
 except ImportError:
@@ -590,7 +589,6 @@ def results_to_dataframe(results: Dict) -> pd.DataFrame:
 # =============================================================================
 
 if __name__ == "__main__":
-    import sys
     
     print("ESMC Embedding Library")
     print("=" * 50)

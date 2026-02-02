@@ -434,6 +434,6 @@ if __name__ == "__main__":
     
     seq_path, meta_path = save_results(sequences_df, metadata_df)
     
-    print(f"\nSaved to:")
+    print("\nSaved to:")
     print(f"  {seq_path}")
     print(f"  {meta_path}")

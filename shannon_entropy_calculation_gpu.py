@@ -49,9 +49,8 @@ def calculate_shannon_entropy_batched(logits, base='e', batch_size=10000):
         entropy: Tensor of shape (num_residues,)
     """
     num_residues = logits.shape[0]
-    device = logits.device
     entropy_list = []
-    
+
     for i in range(0, num_residues, batch_size):
         batch_end = min(i + batch_size, num_residues)
         logits_batch = logits[i:batch_end]
@@ -89,9 +88,8 @@ def calculate_shannon_entropy_mixed_precision(logits, base='e', batch_size=10000
         entropy: Tensor of shape (num_residues,) in fp32
     """
     num_residues = logits.shape[0]
-    device = logits.device
     entropy_list = []
-    
+
     # Cast to fp16 for faster computation
     logits_fp16 = logits.half()
     
@@ -198,9 +196,7 @@ def calculate_entropy_for_proteins(protein_logits_list, base='e', protein_batch_
     num_proteins = len(protein_logits_list)
     all_entropy = []
     protein_results = []
-    
-    device = protein_logits_list[0].device
-    
+
     # Process proteins in batches
     for batch_start in range(0, num_proteins, protein_batch_size):
         batch_end = min(batch_start + protein_batch_size, num_proteins)

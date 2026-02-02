@@ -33,7 +33,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
 import torch

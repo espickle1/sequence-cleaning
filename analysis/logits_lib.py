@@ -17,7 +17,6 @@ Usage:
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -330,14 +329,14 @@ def analyze_residues(
         logits_list = [logits_list[i] for i in sequence_indices if i < len(logits_list)]
     
     # Remove None entries
-    logits_list = [l for l in logits_list if l is not None]
-    
+    logits_list = [logit for logit in logits_list if logit is not None]
+
     if not logits_list:
         raise ValueError("No valid logits found")
-    
+
     # If no residues specified, use all positions from shortest sequence
     if residues_of_interest is None or len(residues_of_interest) == 0:
-        min_len = min(l.shape[0] for l in logits_list)
+        min_len = min(logit.shape[0] for logit in logits_list)
         residues_of_interest = {i: f"Pos {i+1}" for i in range(min_len)}
     
     # Extract logits at each position of interest, pooled across sequences

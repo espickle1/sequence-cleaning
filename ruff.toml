@@ -1,0 +1,8 @@
+[lint]
+# Ignore E402 (module level import not at top of file) in notebooks
+# This is common in Jupyter notebooks where cells have comments before imports
+ignore = []
+
+[lint.per-file-ignores]
+# Ignore specific rules for notebook files
+"*.ipynb" = ["E402", "F401"]
