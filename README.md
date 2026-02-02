@@ -430,4 +430,4 @@ for _, row in seq_df.iterrows():
 
 ## License
 
-MIT License - see [LICENSE](LICENSE)
+Apache License 2.0 - see [LICENSE](https://github.com/espickle1/sequence-cleaning/blob/main/LICENSE)
