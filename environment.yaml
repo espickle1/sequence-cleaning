@@ -1,0 +1,15 @@
+name: sequence-cleaning
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.9
+  - numpy
+  - pandas
+  - pytorch
+  - scikit-learn
+  - seaborn
+  - matplotlib
+  - jupyter
+  - pip
